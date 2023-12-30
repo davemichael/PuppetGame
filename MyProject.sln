@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28315.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engine", "Engine", "{233774A8-CC9D-3FA9-86D1-90573E92B704}"
 EndProject
@@ -23,10 +23,6 @@ Global
 		Development Editor|Win64 = Development Editor|Win64
 		Development|Win64 = Development|Win64
 		Shipping|Win64 = Shipping|Win64
-	EndGlobalSection
-	# UnrealVS Section
-	GlobalSection(ddbf523f-7eb6-4887-bd51-85a714ff87eb) = preSolution
-		AvailablePlatforms=Win64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{045B268A-2C3D-3D5B-8F44-B27751A519DB}.DebugGame Editor|Win64.ActiveCfg = BuiltWithUnrealBuildTool|Win64
@@ -51,5 +47,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{045B268A-2C3D-3D5B-8F44-B27751A519DB} = {233774A8-CC9D-3FA9-86D1-90573E92B704}
 		{53C1E850-A895-3AF5-A581-439D518BB876} = {DE1F8B53-6C02-3C13-9101-A7C8D96F3FF6}
+	EndGlobalSection
+	GlobalSection(ddbf523f-7eb6-4887-bd51-85a714ff87eb) = preSolution
+		AvailablePlatforms = Win64
 	EndGlobalSection
 EndGlobal
