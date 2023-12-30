@@ -40,6 +40,10 @@ AMyProjectCharacter::AMyProjectCharacter()
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+	// Set up power target
+	static ConstructorHelpers::FObjectFinder<UBlueprint> powerTargetBlueprint(
+		TEXT("Blueprint'/Game/FirstPerson/Blueprints/BP_PowerTarget'"));
+	powerTargetBlueprintClass = static_cast<UClass *>(powerTargetBlueprint.Object->GeneratedClass);
 }
 
 void AMyProjectCharacter::BeginPlay()
@@ -138,8 +142,9 @@ void AMyProjectCharacter::Power1Complete(const FInputActionValue& Value)
 			FVector TraceEnd = location + rotation.Vector() * 1000.0f;
 			const FVector DeltaLocation(1000.0f, 0, 0);
 			FHitResult unusedOutSweepHitResult;
-			AddActorWorldOffset(rotation.Vector() * 1000.0f, /*sweep=*/true, &unusedOutSweepHitResult, static_cast<ETeleportType>(/*TeleportPhysics*/1));
-			//AddActorLocalOffset(DeltaLocation, /*sweep=*/true, &unusedOutSweepHitResult, static_cast<ETeleportType>(/*TeleportPhysics*/1));
+			TracePower(/*move_player = */ true);
+			powerTarget->Destroy();
+			powerTarget = nullptr;
 		}
 	}
 }
@@ -174,36 +179,36 @@ bool AMyProjectCharacter::GetPower1Tracing()
 	return bPower1Tracing;
 }
 
-void AMyProjectCharacter::TracePower() {
+void AMyProjectCharacter::TracePower(bool move_player) {
 	// FHitResult will hold all data returned by our line collision query
 	FHitResult Hit;
 
-	// We set up a line trace from our current location to a point 1000cm ahead of us
+	// We set up a line trace from our camera location to a point 1000cm ahead of us
 	FVector location;
 	FRotator rotation;
 	GetActorEyesViewPoint(location, rotation);
 	FVector TraceEnd = location + rotation.Vector() * 1000.0f;
 
-	// You can use FCollisionQueryParams to further configure the query
-	// Here we add ourselves to the ignored list so we won't block the trace
+    // If the power target hasn't spawned yet, spawn it
+	if (!powerTarget) {
+		powerTarget = GetWorld()->SpawnActor<AActor>(powerTargetBlueprintClass);
+	}
+
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
-	// To run the query, you need a pointer to the current level, which you can get from an Actor with GetWorld()
-	// UWorld()->LineTraceSingleByChannel runs a line trace and returns the first actor hit over the provided collision channel.
 	GetWorld()->LineTraceSingleByChannel(Hit, location, TraceEnd, PowerTraceProperty, QueryParams);
-
-	// You can use DrawDebug helpers and the log to help visualize and debug your trace queries.
-	DrawDebugLine(GetWorld(), location, TraceEnd, Hit.bBlockingHit ? FColor::Blue : FColor::Red, false, 0.1f, 0, 10.0f);
-	UE_LOG(LogTemp, Log, TEXT("Tracing line: %s to %s"), *location.ToCompactString(), *TraceEnd.ToCompactString());
-
-	// If the trace hit something, bBlockingHit will be true,
-	// and its fields will be filled with detailed info about what was hit
-	if (Hit.bBlockingHit && IsValid(Hit.GetActor()))
-	{
-		UE_LOG(LogTemp, Log, TEXT("Trace hit actor: %s"), *Hit.GetActor()->GetName());
+	FHitResult unused;
+	FVector powerTargetLocation = TraceEnd;
+	if (Hit.bBlockingHit) {
+		powerTargetLocation = Hit.ImpactPoint;
 	}
-	else {
-		UE_LOG(LogTemp, Log, TEXT("No Actors were hit"));
+	if (move_player) {
+		FTransform transform(powerTargetLocation);
+		// TODO: Figure out correct Z to account for distance from bottom of pawn to camera height
+		transform.AddToTranslation({ 0, 0, 100.0f });
+		SetActorTransform(transform, /*bSweep=*/false, &unused, static_cast<ETeleportType>(/*TeleportPhysics*/1));
+	} else {
+		powerTarget->SetActorTransform(FTransform(powerTargetLocation), /*bSweep=*/false, &unused, static_cast<ETeleportType>(/*TeleportPhysics*/1));
 	}
 }

@@ -49,6 +49,10 @@ class AMyProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	TEnumAsByte<ECollisionChannel> PowerTraceProperty = ECC_WorldDynamic;
 
+	UClass* powerTargetBlueprintClass = nullptr;
+	UPROPERTY(EditDefaultsOnly)
+	AActor* powerTarget = nullptr;
+
 public:
 	AMyProjectCharacter();
 
@@ -115,6 +119,6 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 private:
-	void TracePower();
+	void TracePower(bool move_player = false);
 };
 
