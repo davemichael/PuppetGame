@@ -18,7 +18,9 @@ AMyProjectCharacter::AMyProjectCharacter()
 	// Character doesnt have a rifle at start
 	bHasRifle = false;
 
+    // Powers and perks that we need to make "gettable":
 	bHasMarionette = true;
+	JumpMaxCount = 2;
 
 	bPower1Tracing = false;
 	
