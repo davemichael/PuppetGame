@@ -8,7 +8,19 @@
 #include "Engine/EngineTypes.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
+namespace {
+
+const double kTeleportDistance = 1000.0;
+const double kTeleportHeight = 100.0;  // Really we should base this on Actor half-height.
+const double kMinClimbHeight = 100.0;  // Really should be based on jump height
+const double kMaxClimbHeight = 200.0;  // Probably ~character height?
+const double kMaxWalkSpeed = 600.0;  // cm/s
+const double kMaxRunSpeed = 1000.0;
+const double kMaxCrawlSpeed = 300.0;
+
+}
 
 //////////////////////////////////////////////////////////////////////////
 // AMyProjectCharacter
@@ -86,6 +98,11 @@ void AMyProjectCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMyProjectCharacter::Look);
 
+		// Running
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &AMyProjectCharacter::RunStart);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AMyProjectCharacter::RunStop);
+		EnhancedInputComponent->BindAction(ToggleRunAction, ETriggerEvent::Triggered, this, & AMyProjectCharacter::ToggleRun);
+
 		// Powers
 		EnhancedInputComponent->BindAction(Power1StartAction, ETriggerEvent::Triggered, this, &AMyProjectCharacter::Power1Start);
 		EnhancedInputComponent->BindAction(Power1CompleteAction, ETriggerEvent::Triggered, this, &AMyProjectCharacter::Power1Complete);
@@ -103,6 +120,36 @@ void AMyProjectCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
+	}
+}
+
+void AMyProjectCharacter::RunStart(const FInputActionValue& Value)
+{
+	if (Controller != nullptr)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = kMaxRunSpeed;
+		is_running = true;
+	}
+}
+
+void AMyProjectCharacter::RunStop(const FInputActionValue& Value)
+{
+	if (Controller != nullptr)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = kMaxWalkSpeed;
+		is_running = false;
+	}
+}
+
+void AMyProjectCharacter::ToggleRun(const FInputActionValue& Value)
+{
+	if (Controller != nullptr)
+	{
+		if (is_running) {
+			RunStart(Value);
+		} else {
+			RunStop(Value);
+		}
 	}
 }
 
@@ -138,12 +185,6 @@ void AMyProjectCharacter::Power1Complete(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		if (bHasMarionette) {
-			FVector location;
-			FRotator rotation;
-			GetActorEyesViewPoint(location, rotation);
-			FVector TraceEnd = location + rotation.Vector() * 1000.0f;
-			const FVector DeltaLocation(1000.0f, 0, 0);
-			FHitResult unusedOutSweepHitResult;
 			TracePower(/*move_player = */ true);
 			powerTarget->Destroy();
 			powerTarget = nullptr;
@@ -189,7 +230,7 @@ void AMyProjectCharacter::TracePower(bool move_player) {
 	FVector location;
 	FRotator rotation;
 	GetActorEyesViewPoint(location, rotation);
-	FVector TraceEnd = location + rotation.Vector() * 1000.0f;
+	FVector TraceEnd = location + rotation.Vector() * kTeleportDistance;
 
     // If the power target hasn't spawned yet, spawn it
 	if (!powerTarget) {
@@ -208,7 +249,7 @@ void AMyProjectCharacter::TracePower(bool move_player) {
 	if (move_player) {
 		FTransform transform(powerTargetLocation);
 		// TODO: Figure out correct Z to account for distance from bottom of pawn to camera height
-		transform.AddToTranslation({ 0, 0, 100.0f });
+		transform.AddToTranslation({ 0, 0, kTeleportHeight });
 		SetActorTransform(transform, /*bSweep=*/false, &unused, static_cast<ETeleportType>(/*TeleportPhysics*/1));
 	} else {
 		powerTarget->SetActorTransform(FTransform(powerTargetLocation), /*bSweep=*/false, &unused, static_cast<ETeleportType>(/*TeleportPhysics*/1));

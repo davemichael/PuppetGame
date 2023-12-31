@@ -31,13 +31,15 @@ class AMyProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext;
 
-	/** Jump Input Action */
+	/** Movement Input Actions */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
-
-	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* RunAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ToggleRunAction;
 
 	/** Power 1 Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -98,11 +100,11 @@ public:
 	bool GetPower1Tracing();
 
 protected:
-	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
-
-	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+	void RunStart(const FInputActionValue& Value);
+	void RunStop(const FInputActionValue& Value);
+	void ToggleRun(const FInputActionValue& Value);
 
 	void Power1Start(const FInputActionValue& Value);
 	void Power1Complete(const FInputActionValue& Value);
@@ -120,5 +122,7 @@ public:
 
 private:
 	void TracePower(bool move_player = false);
+
+	bool is_running = false;
 };
 
