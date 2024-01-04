@@ -17,7 +17,7 @@ const double kTeleportHeight = 100.0;  // Really we should base this on Actor ha
 const double kMinClimbHeight = 100.0;  // Really should be based on jump height
 const double kMaxClimbHeight = 200.0;  // Probably ~character height?
 const double kMaxWalkSpeed = 600.0;  // cm/s
-const double kMaxRunSpeed = 1000.0;
+const double kMaxRunSpeed = 1500.0;
 const double kMaxCrawlSpeed = 300.0;
 
 }
@@ -32,7 +32,6 @@ AMyProjectCharacter::AMyProjectCharacter()
 
     // Powers and perks that we need to make "gettable":
 	bHasMarionette = true;
-	JumpMaxCount = 2;
 
 	bPower1Tracing = false;
 	
@@ -62,6 +61,8 @@ AMyProjectCharacter::AMyProjectCharacter()
 
 void AMyProjectCharacter::BeginPlay()
 {
+	JumpMaxCount = 2;
+
 	// Call the base class  
 	Super::BeginPlay();
 
@@ -89,7 +90,7 @@ void AMyProjectCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Moving
@@ -146,9 +147,9 @@ void AMyProjectCharacter::ToggleRun(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		if (is_running) {
-			RunStart(Value);
-		} else {
 			RunStop(Value);
+		} else {
+			RunStart(Value);
 		}
 	}
 }
@@ -168,20 +169,17 @@ void AMyProjectCharacter::Look(const FInputActionValue& Value)
 
 void AMyProjectCharacter::Power1Start(const FInputActionValue& Value)
 {
-    // TODO: Aim.
 	// Rough outline:
 	// 1. Make an actor to represent destination
-	// 
-	// 2. On every tick, trace and place the actor(?)
-	// 3. On completion, delete the actor
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("keydown"));
+	// 2. On every tick, trace and place the actor
+	// 3. On completion, delete the actor.
+	// See Tick function for more detail.
 	SetPower1Tracing(true);
 }
 
 void AMyProjectCharacter::Power1Complete(const FInputActionValue& Value)
 {
 	SetPower1Tracing(false);
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("keyup"));
 	if (Controller != nullptr)
 	{
 		if (bHasMarionette) {
